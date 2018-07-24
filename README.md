@@ -1,0 +1,2 @@
+# JackPot-Skript
+JackPot Skript
