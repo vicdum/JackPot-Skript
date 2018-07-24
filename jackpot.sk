@@ -1,0 +1,72 @@
+options:
+	prefix: &4&lF&f&lC &8&l»&7
+	otomatik çekiliş: açık # ( açık / kapalı)
+	minimum katılım: 2
+	maksimum katılım: 50
+	versiyon: 1.0 # Burası sadece karşılaştırmanız için!
+
+every 15 minutes:
+	{@otomatik çekiliş} is "açık":
+		jackpot()
+
+function jackpot():
+	size of {jackpot::liste::katılan::*} is bigger than {@minimum katılım}
+	set {jackpot::dönüyor} to 1
+	set {_z} to 6
+	loop 5 times:
+		remove 1 from {_z}
+		broadcast "{@prefix} JackPot için son %{_z}% saniye."
+		wait 1 second
+	broadcast "{@prefix} JackPot dönüyor, katılan herkese bol şans!"
+	wait 1 second
+	loop {jackpot::liste::katılan::*}:
+		set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%loop-value%::yatırılan}))*100
+		set {_sans} to rounded {_sans}
+		loop {_sans} times:
+			add loop-value-1 to {_jackpotdönüyor::*}
+	wait 1 second
+	set {_kazanan} to random element out of {_jackpotdönüyor::*}
+	wait 1 second
+	broadcast "{@prefix} &3JackPot kazananı &a%{_kazanan}%!%nl% &3Yatırdığı Para &8&l► &f%{jackpot::%{_kazanan}%::yatırılan}%$%nl% &3Toplam Kazandığı Para &8&l► &f%{jackpot::liste::yatırılan}%$"
+	wait 3 tick
+	add {jackpot::liste::yatırılan} to {_kazanan}'s money
+	wait 3 tick
+	delete {jackpot::*}
+
+command /jackpot [<int>]:
+	usage: /jackpot [<Yatırılacak Miktar>]
+	aliases: jp
+	trigger:
+		arg 1 is not set:
+			{jackpot::liste::yatırılan} is not set:
+				set {jackpot::liste::yatırılan} to 0
+			open virtual chest with size 6 named "&4&lJack&f&lPot" to player
+			make gui slot integers from 1 to 53 of player with black stained glass pane
+			make gui slot 0 of player with paper named "&7&l» » » &a&lBilgiler &7&l« « «" with lore "&eKatılan Kişi Sayısı &8&l► &f%size of {jackpot::liste::katılan::*}% Kişi||&ePottaki Para &8&l► &f%{jackpot::liste::yatırılan}%$"
+			set {_x} to 0
+			loop {jackpot::liste::katılan::*}:
+				add 1 to {_x}
+				set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%loop-value%::yatırılan}))*100
+				make gui slot {_x} of player with loop-value's skull named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eOyuncu &8&l► &f%loop-value%||&eYatırılan &8&l► &f%{jackpot::%loop-value%::yatırılan}%$||&eŞans &8&l► &f%%%{_sans}%||||&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «"
+		arg 1 is set:
+			{jackpot::dönüyor} isn't set:
+				size of {jackpot::liste::katılan::*} is bigger than {@maksimum katılım}:
+					send "{@prefix} Üzgünüm, JackPot'a maksimum sayıda kişi katılmış."
+					stop
+				player's money is less than arg 1:
+					send "{@prefix} JackPot'a yatırmak istediğin kadar paran yok."
+					stop
+				remove arg 1 from player's money
+				{jackpot::liste::katılan::*} contains player:
+					add arg 1 to {jackpot::%player%::yatırılan}
+					add arg 1 to {jackpot::liste::yatırılan}
+					set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%player%::yatırılan}))*100
+					send "{@prefix} JackPot'a para yatırdın!%nl%&eToplam Yatırdığın Para &8&l► &f%{jackpot::%player%::yatırılan}%$%nl%&eŞans &8&l► &f%%%{_sans}%"
+				else:
+					add player to {jackpot::liste::katılan::*}
+					add arg 1 to {jackpot::%player%::yatırılan}
+					add arg 1 to {jackpot::liste::yatırılan}
+					set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%player%::yatırılan}))*100
+					send "{@prefix} JackPot'a para yatırdın!%nl%&eToplam Yatırdığın Para &8&l► &f%{jackpot::%player%::yatırılan}%$%nl%&eŞans &8&l► &f%%%{_sans}%"
+			else:
+				send "{@prefix} JackPot şuanda dönüyor, lütfen bitmesini bekle."
