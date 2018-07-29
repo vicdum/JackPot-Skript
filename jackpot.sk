@@ -1,12 +1,12 @@
 options:
 	prefix: &4&lF&f&lC &8&l»&7
-	otomatik çekiliş: açık # ( açık / kapalı)
+	otomatik çekiliş: 1 # ( 1 - açık / 0 - kapalı)
 	minimum katılım: 2
 	maksimum katılım: 50
-	versiyon: 1.0 # Burası sadece karşılaştırmanız için!
+	versiyon: 2.0 # Burası sadece karşılaştırmanız için!
 
 every 15 minutes:
-	{@otomatik çekiliş} is "açık":
+	{@otomatik çekiliş} is 1:
 		jackpot()
 
 function jackpot():
@@ -40,33 +40,78 @@ command /jackpot [<int>]:
 		arg 1 is not set:
 			{jackpot::liste::yatırılan} is not set:
 				set {jackpot::liste::yatırılan} to 0
-			open virtual chest with size 6 named "&4&lJack&f&lPot" to player
-			make gui slot integers from 1 to 53 of player with black stained glass pane
-			make gui slot 0 of player with paper named "&7&l» » » &a&lBilgiler &7&l« « «" with lore "&eKatılan Kişi Sayısı &8&l► &f%size of {jackpot::liste::katılan::*}% Kişi||&ePottaki Para &8&l► &f%{jackpot::liste::yatırılan}%$"
-			set {_x} to 0
-			loop {jackpot::liste::katılan::*}:
-				add 1 to {_x}
-				set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%loop-value%::yatırılan}))*100
-				make gui slot {_x} of player with loop-value's skull named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eOyuncu &8&l► &f%loop-value%||&eYatırılan &8&l► &f%{jackpot::%loop-value%::yatırılan}%$||&eŞans &8&l► &f%%%{_sans}%||||&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «"
+			create a gui with virtual chest with 6 rows named "&4&lJack&f&lPot":
+				make gui integers from 1 to 52 with black stained glass pane
+				make gui 0 with paper named "&7&l» » » &a&lBilgiler &7&l« « «" with lore "&eKatılan Kişi Sayısı &8&l► &f%size of {jackpot::liste::katılan::*}% Kişi||&ePottaki Para &8&l► &f%{jackpot::liste::yatırılan}%$"
+				make gui 53 with sunflower named "&7&l&m » » » » »&r &aPara Yatır &7&l&m« « « « «":
+					execute player command "/jackpot 10000"
+				set {_x} to 0
+				loop {jackpot::liste::katılan::*}:
+					add 1 to {_x}
+					set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%loop-value%::yatırılan}))*100
+					make gui {_x} with loop-value's skull named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eOyuncu &8&l► &f%loop-value%||&eYatırılan &8&l► &f%{jackpot::%loop-value%::yatırılan}%$||&eŞans &8&l► &f%%%{_sans}%||||&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «"
+			open last gui to player
 		arg 1 is set:
-			{jackpot::dönüyor} isn't set:
-				size of {jackpot::liste::katılan::*} is bigger than {@maksimum katılım}:
-					send "{@prefix} Üzgünüm, JackPot'a maksimum sayıda kişi katılmış."
-					stop
-				player's money is less than arg 1:
-					send "{@prefix} JackPot'a yatırmak istediğin kadar paran yok."
-					stop
-				remove arg 1 from player's money
-				{jackpot::liste::katılan::*} contains player:
-					add arg 1 to {jackpot::%player%::yatırılan}
-					add arg 1 to {jackpot::liste::yatırılan}
-					set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%player%::yatırılan}))*100
-					send "{@prefix} JackPot'a para yatırdın!%nl%&eToplam Yatırdığın Para &8&l► &f%{jackpot::%player%::yatırılan}%$%nl%&eŞans &8&l► &f%%%{_sans}%"
+			arg is bigger than 0:
+				{jackpot::dönüyor} isn't set:
+					size of {jackpot::liste::katılan::*} is bigger than {@maksimum katılım}:
+						send "{@prefix} Üzgünüm, JackPot'a maksimum sayıda kişi katılmış."
+						stop
+					player's money is less than arg:
+						send "{@prefix} JackPot'a yatırmak istediğin kadar paran yok."
+						stop
+					set {m::%player%} to arg
+					create a gui with virtual chest named "&4&lJack&f&lPot" and shape "xxxxxxxxxxqwexaxdxxxxxxxxxz":
+						make gui slot "x" with black stained glass pane
+						make gui slot "q" with iron ingot named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "&eSol Tıklayarak||&a10.000$ Ekle||&eSağ Tıklayarak||&c10.000$ Azalt":
+							gui-click-action is left mouse button:
+								add 10000 to {m::%player%}
+								make gui slot 14 with glowing sunflower named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eYatıracağın miktar &8&l► &f%{m::%player%}% $"
+							gui-click-action is right mouse button:
+								{m::%player%} is bigger than 9999
+								remove 10000 from {m::%player%}
+								make gui slot 14 with glowing sunflower named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eYatıracağın miktar &8&l► &f%{m::%player%}% $"
+						make gui slot "w" with gold ingot named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "&eSol Tıklayarak||&a100.000$ Ekle||&eSağ Tıklayarak||&c100.000$ Azalt":
+							gui-click-action is left mouse button:
+								add 100000 to {m::%player%}
+								make gui slot 14 with glowing sunflower named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eYatıracağın miktar &8&l► &f%{m::%player%}% $"
+							gui-click-action is right mouse button:
+								{m::%player%} is bigger than 99999
+								remove 100000 from {m::%player%}
+								make gui slot 14 with glowing sunflower named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eYatıracağın miktar &8&l► &f%{m::%player%}% $"
+						make gui slot "e" with diamond named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "&eSol Tıklayarak||&a1.000.000$ Ekle||&eSağ Tıklayarak||&c1.000.000$ Azalt":
+							gui-click-action is left mouse button:
+								add 1000000 to {m::%player%}
+								make gui slot 14 with glowing sunflower named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eYatıracağın miktar &8&l► &f%{m::%player%}% $"
+							gui-click-action is right mouse button:
+								{m::%player%} is bigger than 999999
+								remove 1000000 from {m::%player%}
+								make gui slot 14 with glowing sunflower named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eYatıracağın miktar &8&l► &f%{m::%player%}% $"
+						make gui slot "a" with glowing sunflower named "&7&l&m » » » » »&r &4Jack&fPot &7&l&m« « « « «" with lore "||&eYatıracağın miktar &8&l► &f%{m::%player%}% $"
+						make gui slot "d" with nether star named "&7&l&m » » » » »&r &aOnayla &7&l&m« « « « «":
+							{m::%player%} is bigger than 0:
+								remove {m::%player%} from player's money
+								{jackpot::liste::katılan::*} contains player:
+									add {m::%player%} to {jackpot::%player%::yatırılan}
+									add {m::%player%} to {jackpot::liste::yatırılan}
+									set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%player%::yatırılan}))*100
+									send "{@prefix} JackPot'a para yatırdın!%nl%&eToplam Yatırdığın Para &8&l► &f%{jackpot::%player%::yatırılan}%$%nl%&eŞans &8&l► &f%%%{_sans}%"
+									delete {m::%player%}
+								else:
+									add player to {jackpot::liste::katılan::*}
+									add {_x} to {jackpot::%player%::yatırılan}
+									add {_x} to {jackpot::liste::yatırılan}
+									set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%player%::yatırılan}))*100
+									send "{@prefix} JackPot'a para yatırdın!%nl%&eToplam Yatırdığın Para &8&l► &f%{jackpot::%player%::yatırılan}%$%nl%&eŞans &8&l► &f%%%{_sans}%"
+									delete {m::%player%}
+							else:
+								send "{@prefix} Geçersiz bir değer girdin!" to player
+						make gui slot "z" with barrier named "&7&l&m » » » » »&r &aListeye Dön &7&l&m« « « « «":
+							execute player command "/jackpot"
+						run when close gui:
+							delete {m::%player%}
+					open last gui to player
 				else:
-					add player to {jackpot::liste::katılan::*}
-					add arg 1 to {jackpot::%player%::yatırılan}
-					add arg 1 to {jackpot::liste::yatırılan}
-					set {_sans} to  (1/({jackpot::liste::yatırılan}/{jackpot::%player%::yatırılan}))*100
-					send "{@prefix} JackPot'a para yatırdın!%nl%&eToplam Yatırdığın Para &8&l► &f%{jackpot::%player%::yatırılan}%$%nl%&eŞans &8&l► &f%%%{_sans}%"
+					send "{@prefix} JackPot şuanda dönüyor, lütfen bitmesini bekle."
 			else:
-				send "{@prefix} JackPot şuanda dönüyor, lütfen bitmesini bekle."
+				send "{@prefix} Geçersiz bir değer girdin!"
